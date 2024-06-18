@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  email      String     @unique
+  links      Link[]
+  categories Category[]
+  role       Roles
+}
+
+model AuthCode {
+  id        Int      @id @default(autoincrement())
+  userEmail String
+  code      String
+  expiresAt DateTime
+}
+
+enum Roles {
+  User
+  Admin
+}
+
+model Link {
+  id          Int            @id @default(autoincrement())
+  name        String
+  endpoint    String
+  description String?
+  Category    Category?      @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  queryParams Query_params[]
+  owner       User           @relation(fields: [ownerId], references: [id])
+  ownerId     Int
+  isGeneral   Boolean        @default(false)
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  type        Link_type
+  links       Link[]
+  description String?
+  owner       User      @relation(fields: [ownerId], references: [id])
+  ownerId     Int
+}
+
+model Query_params {
+  id           Int        @id @default(autoincrement())
+  key          String
+  defaultValue String?
+  type         Param_type
+  link         Link       @relation(fields: [linkId], references: [id])
+  linkId       Int
+}
+
+enum Param_type {
+  STRING
+  NUMBER
+  DATE
+}
+
+enum Link_type {
+  externo
+  metabase
+}
